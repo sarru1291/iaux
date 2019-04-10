@@ -68,18 +68,33 @@ class ArchiveAudioPlayer extends Component {
    * @param { object } jwplayerInstance
    */
   onReady(jwplayerInstance) {
+    const { backgroundPhoto, jwplayerID } = this.props;
     // User Play class instance to set event listeners
     const { player } = this.state;
     player.on('playlistItem', this.onPlaylistItemCB);
+
+    if (backgroundPhoto) {
+      // do not show waveform if there is a background photo
+      // hack for now, until Play8 waveform toggle is working
+      setTimeout(() => {
+        // this timeout is necessary to trump Play8 setup.
+        const jwplayerHolder = document.getElementById(jwplayerID);
+        const style = 'height: 40px !important; background-color: black !important;';
+        jwplayerHolder.setAttribute('style', style);
+        const waveformBG = jwplayerHolder.querySelector('.jw-preview');
+        waveformBG.setAttribute('style', 'background-image: none !important;');
+      }, 0);
+    }
   }
 
   /**
    * Register this instance of JWPlayer
    */
   registerPlayer() {
-    const { jwplayerInfo, jwplayerID } = this.props;
+    const { jwplayerInfo, jwplayerID, backgroundPhoto } = this.props;
     const { jwplayerPlaylist, identifier, collection } = jwplayerInfo;
 
+    const waveformer = backgroundPhoto ? null : 'jw-holder';
     // We are using IA custom global Player class to instatiate the player
     const baseConfig = {
       start: 0,
@@ -93,7 +108,7 @@ class ArchiveAudioPlayer extends Component {
       responsive: true,
       identifier,
       collection,
-      waveformer: 'jw-holder',
+      waveformer,
       hide_list: true,
       onReady: this.onReady
     };
@@ -109,9 +124,19 @@ class ArchiveAudioPlayer extends Component {
    */
   emitPlaylistChange() {
     const { playerPlaylistIndex } = this.state;
-    const { jwplayerPlaylistChange } = this.props;
+    const { jwplayerPlaylistChange, backgroundPhoto, jwplayerID } = this.props;
 
     jwplayerPlaylistChange({ newTrackIndex: playerPlaylistIndex });
+
+    if (backgroundPhoto) {
+      // remove waveform, hack until Play8 waveform toggle is working
+      setTimeout(() => {
+        // this timeout is necessary to trump Play8 setup.
+        const jwplayerHolder = document.getElementById(jwplayerID);
+        const waveformBG = jwplayerHolder.querySelector('.jw-preview');
+        waveformBG.setAttribute('style', 'background-image: none !important;');
+      }, 400);
+    }
   }
 
   render() {
