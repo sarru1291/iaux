@@ -10,7 +10,7 @@ import PropTypes from 'prop-types'
        this.loadAPI();
 
          window.onYouTubeIframeAPIReady=()=>{
-          let YTPlayer=new window.YT.Player(this.state.playerAnchor,{
+          let YTPlayer=new window.YT.Player(this.state.playerAnchor.current,{
             height: this.props.height || 390,
             width: this.props.width || 640,
             videoId: this.props.videoId,
@@ -37,7 +37,7 @@ import PropTypes from 'prop-types'
    render () {
     return (
       <div className='YoutubePlayer'>
-        <div ref={(r) => { this.state.playerAnchor = r }}></div>
+        <div ref={ this.state.playerAnchor}></div>
       </div>
     )
   }
