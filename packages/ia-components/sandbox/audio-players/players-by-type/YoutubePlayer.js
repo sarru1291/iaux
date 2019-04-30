@@ -4,24 +4,41 @@ import PropTypes from 'prop-types'
  export default class YoutubePlayer extends Component {
   state={
     playerAnchor:React.createRef(),
-    YTPlayer:null
+    YTPlayer:null,
+    tracklists:this.props.tracklists,
+    selectedTrack:this.props.selectedTrack
   }
-  componentDidMount () {
-       this.loadAPI();
-
-         window.onYouTubeIframeAPIReady=()=>{
-          let YTPlayer=new window.YT.Player(this.state.playerAnchor.current,{
-            height: this.props.height || 390,
-            width: this.props.width || 640,
-            videoId: this.props.videoId,
-            events: {
-              onReady: this.onPlayerReady,
-            }
-          })
-          this.setState({
-            YTPlayer:YTPlayer
-          })
+  componentDidMount(){
+    this.loadAPI();
+    const YTPlayer=this.loadPlayer(this.state.tracklists,this.state.selectedTrack);
+    this.setState({YTPlayer});
+  }
+ 
+  loadPlayer(tracklists,selectedTrack){
+    let YTPlayer;
+    let videoIds='';
+    for (let index = 0; index < tracklists.length; index++) {
+      videoIds=videoIds+tracklists[index]+','
+    }
+    let currentVideoId=tracklists[selectedTrack];
+    window.onYouTubeIframeAPIReady=()=>{
+      YTPlayer=new window.YT.Player(this.state.playerAnchor.current,{
+        height: this.props.height || 390,
+        width: this.props.width || 640,
+        videoId: currentVideoId,
+        playerVars:{
+          modestbranding:1,
+          autoplay:0,
+          enablejsapi:1,
+          playlist:videoIds,
+          rel:0
+        },
+        events: {
+          onReady: this.onPlayerReady
         }
+      })
+    }
+    return YTPlayer;
   }
   loadAPI(){
     const tag = document.createElement('script')
@@ -29,12 +46,9 @@ import PropTypes from 'prop-types'
     const firstScriptTag = document.getElementsByTagName('script')[0]
     firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
   }
-  onPlayerReady(e) {
-    e.target.playVideo();
-    // alert('video is on...');
-  }
 
-   render () {
+  render () {
+  
     return (
       <div className='YoutubePlayer'>
         <div ref={ this.state.playerAnchor}></div>
@@ -44,7 +58,6 @@ import PropTypes from 'prop-types'
 }
 
  YoutubePlayer.propTypes = {
-  videoId: PropTypes.string.required,
-  width: PropTypes.number,
-  height: PropTypes.number
+  tracklists: PropTypes.arrayOf(PropTypes.string),
+  selectedTrack: PropTypes.number
 }
