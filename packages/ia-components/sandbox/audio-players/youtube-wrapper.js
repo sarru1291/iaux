@@ -10,7 +10,6 @@ import styles from './styles/youtube-wrapper.less';
  * Youtube Wrapper
  * Props:
  * @param object albumMetaData
- * @param array jwplayerPlaylist
  */
 
 class YoutubeWrapper extends Component {
@@ -20,29 +19,38 @@ class YoutubeWrapper extends Component {
     const { albumMetaData} = props;
     const albumData = flattenAlbumData(albumMetaData);
     const tracklistToShow=getTrackListBySource(albumData, "youtube");
-  
-    const tracklists=[];
-    for (let index = 0; index < tracklistToShow.length; index++) {
-      tracklists[index] = tracklistToShow[index].youtube.id;
-    }
+
     this.state = {
       albumData,
       tracklistToShow,
-      tracklists,
       channelToPlay: 'youtube',
-      selectedTrack:6
+      selectedTrack:1
     };
     this.onTrackSelected=this.onTrackSelected.bind(this);
   }
+
   onTrackSelected(trackNumber){
     this.setState({selectedTrack:trackNumber});    
   }
+
+  playNextTrack(currentTrack){
+    let newTrack;
+    for (let index = 0; index < this.state.tracklistToShow.length; index++) {
+      if (this.state.tracklistToShow[index].trackNumber===currentTrack) {
+          const nextTrack=index+1;
+          newTrack=this.state.tracklistToShow[nextTrack].trackNumber;
+      }
+    }  
+    this.setState({selectedTrack:newTrack})    
+  }
+
   render() {
     return (
       <div className="YoutubeWrapper">
         <YoutubePlayer
-          tracklists={this.state.tracklists}
+          tracklistToShow={this.state.tracklistToShow}
           selectedTrack={this.state.selectedTrack}
+          playNextTrack={(currentTrack)=>this.playNextTrack(currentTrack)}
           />
         <YoutubeTracklist
             selectedTrack={this.state.selectedTrack}
@@ -55,8 +63,7 @@ class YoutubeWrapper extends Component {
 }
 
 YoutubeWrapper.propTypes = {
-  albumMetaData: PropTypes.object.isRequired,
-  jwplayerPlaylist: PropTypes.array
+  albumMetaData: PropTypes.object.isRequired
 };
 
 export default YoutubeWrapper

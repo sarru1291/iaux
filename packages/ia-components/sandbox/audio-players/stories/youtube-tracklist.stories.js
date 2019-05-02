@@ -33,6 +33,5 @@ import YoutubeTracklist from '../youtube-tracklist/youtube-tracklist';
     
      return <YoutubeTracklist
                 selectedTrack={1}
-                tracks={tracks}
-                onSelected={()=>{alert('track clicked')}}/>
+                tracks={tracks}/>
   })

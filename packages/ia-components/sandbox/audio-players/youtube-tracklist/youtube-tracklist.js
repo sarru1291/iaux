@@ -12,14 +12,27 @@ class YoutubeTracklist extends Component {
     } 
   }
  
+  componentWillReceiveProps(nextProps,nextState){
+    this.setState({selectedTrack:nextProps.selectedTrack})
+  }
+
+  shouldComponentUpdate(nextProps,nextState){
+    return this.state.selectedTrack!==nextProps.selectedTrack
+  }
+  componentDidUpdate(){
+    console.log("tracklist did update");
+  }
   trackButton = (selectedTrack, thisTrack, onSelected) => {
     const { trackNumber, length, formattedLength, title, artist } = thisTrack;
-  
+    let trackButtonClass="track-button";
+    if (trackNumber===selectedTrack) {
+      trackButtonClass="track-button-selected"
+    }
     return (
       <button
         type="button"
         trackNumber={trackNumber}
-        className="track-button"
+        className={trackButtonClass}
         onClick={(e)=>{onSelected(trackNumber)}}
       >
         <span className="track-number">{trackNumber}</span>

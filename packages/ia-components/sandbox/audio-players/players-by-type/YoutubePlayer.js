@@ -1,54 +1,142 @@
 import React, { Component} from 'react'
 import PropTypes from 'prop-types'
 
+const PlayerState = {
+  UNSTARTED: -1,
+  ENDED: 0,
+  PLAYING: 1,
+  PAUSED: 2,
+  BUFFERING: 3,
+  CUED: 5,
+};
+const ErrorState = {
+  INVALIDVIDEOID: 2,
+  HTML5ERROR: 5,
+  VIDEONOTFOUND: 100,
+  NOTALLOWEDBYOWNER: 101||105
+};
+
  export default class YoutubePlayer extends Component {
-  state={
-    playerAnchor:React.createRef(),
-    YTPlayer:null,
-    tracklists:this.props.tracklists,
-    selectedTrack:this.props.selectedTrack
+
+  constructor(props){
+    super(props);
+    for (let index = 0; index < this.props.tracklistToShow.length; index++) {
+      if (this.props.tracklistToShow[index].trackNumber===this.props.selectedTrack) {
+        var currentVideoId=this.props.tracklistToShow[index].youtube.id
+      }
+    } 
+    this.state={
+      playerAnchor:React.createRef(),
+      tracklistToShow:this.props.tracklistToShow,
+      selectedTrack:this.props.selectedTrack,
+      currentVideoId:currentVideoId
+    }
+    
+    this.loadAPI=this.loadAPI.bind(this);
+    this.loadPlayer=this.loadPlayer.bind(this);
+    this.onPlayerStateChange=this.onPlayerStateChange.bind(this);
+    this.onPlayerReady=this.onPlayerReady.bind(this);
+    this.onPlayerError=this.onPlayerError.bind(this);
   }
+
   componentDidMount(){
-    this.loadAPI();
-    const YTPlayer=this.loadPlayer(this.state.tracklists,this.state.selectedTrack);
-    this.setState({YTPlayer});
+      this.loadAPI();
+      this.loadPlayer();
   }
- 
-  loadPlayer(tracklists,selectedTrack){
-    let YTPlayer;
-    let videoIds='';
-    for (let index = 0; index < tracklists.length; index++) {
-      videoIds=videoIds+tracklists[index]+','
-    }
-    let currentVideoId=tracklists[selectedTrack];
-    window.onYouTubeIframeAPIReady=()=>{
-      YTPlayer=new window.YT.Player(this.state.playerAnchor.current,{
-        height: this.props.height || 390,
-        width: this.props.width || 640,
-        videoId: currentVideoId,
-        playerVars:{
-          modestbranding:1,
-          autoplay:0,
-          enablejsapi:1,
-          playlist:videoIds,
-          rel:0
-        },
-        events: {
-          onReady: this.onPlayerReady
+
+  componentWillReceiveProps(nextProps,nextState){
+    // console.log(nextProps);
+    if (nextProps.selectedTrack!==this.state.selectedTrack) { 
+      let currentVideoId;
+      for (let index = 0; index < this.state.tracklistToShow.length; index++) {
+        if (this.state.tracklistToShow[index].trackNumber===nextProps.selectedTrack) {
+            currentVideoId=this.state.tracklistToShow[index].youtube.id;
         }
-      })
+      }     
+      
+      this.setState({
+              currentVideoId,
+              selectedTrack:nextProps.selectedTrack})       
     }
-    return YTPlayer;
   }
+
+  shouldComponentUpdate(nextProps,nextState){
+    return this.state.selectedTrack!==nextProps.selectedTrack
+  }
+
+  componentDidUpdate(){
+    this.player.loadVideoById(this.state.currentVideoId, 0, "large")
+  }
+
   loadAPI(){
     const tag = document.createElement('script')
     tag.src = 'https://www.youtube.com/iframe_api'
     const firstScriptTag = document.getElementsByTagName('script')[0]
-    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag)
+    firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+  }
+  
+  loadPlayer(){
+    window.onYouTubeIframeAPIReady=()=>{
+      this.player=new window.YT.Player(this.state.playerAnchor.current,{
+        height:'390',
+        width:'640',
+        videoId:this.state.currentVideoId,
+        playerVars:{
+          modestbranding:1,
+          enablejsapi:1,
+          rel:0
+        },
+        events:{
+          'onReady':this.onPlayerReady,
+          'onStateChange': this.onPlayerStateChange,
+          'onError': this.onPlayerError
+        }
+      })
+    } 
+  }
+  
+  onPlayerStateChange(event){
+    switch (event.target.getPlayerState()) {
+      case PlayerState.ENDED:
+          this.props.playNextTrack(this.state.selectedTrack);
+        break;
+    
+      default:
+        break;
+    }
+  }
+
+  onPlayerReady(event) {
+    event.target.playVideo();
+  }
+
+  onPlayerError(event){
+    switch (event.data) {
+      case ErrorState.INVALIDVIDEOID:
+          alert('Invalid VideoID')
+          event.target.stopVideo();
+        break;
+      case ErrorState.VIDEONOTFOUND:
+          alert('Video not found')
+          event.target.stopVideo();
+        break;
+      case ErrorState.NOTALLOWEDBYOWNER:
+          alert('Not allowed by User')
+          event.target.stopVideo();
+          break;
+      case ErrorState.HTML5ERROR:
+          alert('HTML5 Error')
+          event.target.stopVideo();
+          break;
+      default:
+          alert('Video Unavailable')
+          event.target.stopVideo();
+        break;
+    }
   }
 
   render () {
-  
+     
     return (
       <div className='YoutubePlayer'>
         <div ref={ this.state.playerAnchor}></div>
@@ -58,6 +146,7 @@ import PropTypes from 'prop-types'
 }
 
  YoutubePlayer.propTypes = {
-  tracklists: PropTypes.arrayOf(PropTypes.string),
-  selectedTrack: PropTypes.number
+  tracklistToShow: PropTypes.arrayOf(PropTypes.string),
+  selectedTrack: PropTypes.number,
+  playNextTrack: PropTypes.func
 }

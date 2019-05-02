@@ -12,7 +12,6 @@ const {itemInfo, jwplayerPlaylist}=albumMetaData;
   .addWithJSX('Youtube Wrapper', () => {
       
      return <YoutubeWrapper
-                albumMetaData={itemInfo}
-                jwplayerPlaylist={jwplayerPlaylist}/>
+                albumMetaData={itemInfo}/>
 
   })
